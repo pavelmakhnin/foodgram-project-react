@@ -14,14 +14,14 @@ class User(AbstractUser):
         max_length=254,
         unique=True,
         null=False
-     )
+    )
     username = models.CharField(
         verbose_name='Username',
         help_text='Enter the email of the User',
         max_length=150,
         unique=True,
         null=False
-     )
+    )
     first_name = models.CharField(
         verbose_name='first_name',
         help_text='Enter the First Name of the User',

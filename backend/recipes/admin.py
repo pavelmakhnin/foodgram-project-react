@@ -48,7 +48,7 @@ class RecipeAdmin(admin.ModelAdmin):
         'name',
         'author',
         'added_to_favorites'
-     )
+    )
     list_filter = (
         'name',
         'author',

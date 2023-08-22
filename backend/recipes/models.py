@@ -13,19 +13,19 @@ class Tag(models.Model):
         help_text='Title for Tag',
         max_length=200,
         unique=True
-        )
+    )
     color = models.CharField(
         verbose_name='Hex-code',
         help_text='Hex-code for color, for example: #FF0000',
         max_length=7,
         unique=True
-        )
+    )
     slug = models.SlugField(
         verbose_name='Slug',
         max_length=200,
         help_text='Title for Slug',
         unique=True,
-        )
+    )
 
     class Meta:
         verbose_name = "Tag"

@@ -42,7 +42,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             user=user,
             recipe=recipe
         ).exists():
-            raise exceptions.ValidationError('Recipe is added to Favorite Recipes.')
+            raise exceptions.ValidationError('Recipe is added.')
 
         FavoriteRecipes.objects.create(user=user, recipe=recipe)
         serializer = ShortRecipeSerializer(
@@ -189,7 +189,7 @@ class CustomUserViewSet(UserViewSet):
             author=author
         ).exists():
             raise exceptions.ValidationError(
-                'Subscription has not been registered or has already been deleted.'
+                'Subscription not registered or is already been deleted.'
             )
         Subscribe.objects.get(user=user, author=author).delete()
 
