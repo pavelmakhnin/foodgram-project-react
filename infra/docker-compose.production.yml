@@ -1,0 +1,45 @@
+version: "3"
+services:
+  db:
+    image: postgres:13.0-alpine
+    env_file: .env
+    volumes:
+      - db_value:/var/lib/postgresql/data
+
+  backend:
+    image: kittygram/foodgram_backend
+    build: ../backend/
+    restart: always
+    volumes:
+      - static_value:/app/static/
+      - media_value:/app/media/
+    depends_on:
+      - db
+    env_file: .env
+
+  frontend:
+    image: kittygram/foodgram_frontend
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ../frontend/:/app/result_build/
+
+  nginx:
+    image: kittygram/foodgram_gateway
+    ports:
+      - 8000:80
+    volumes:
+      - ./docs/:/usr/share/nginx/html/api/docs/
+      - ../frontend/build:/usr/share/nginx/html/
+      - static_value:/app/static/
+      - media_value:/app/media/
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  static_value:
+  media_value:
+  db_value:
+

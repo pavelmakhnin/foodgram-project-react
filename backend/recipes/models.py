@@ -1,5 +1,5 @@
 # from colorfield.fields import ColorField
-# from django.core.validators import MinValueValidator
+from django.core.validators import RegexValidator
 from django.db import models
 
 from users.models import User
@@ -18,7 +18,13 @@ class Tag(models.Model):
         verbose_name='Hex-code',
         help_text='Hex-code for color, for example: #FF0000',
         max_length=7,
-        unique=True
+        unique=True,
+        validators=[
+            RegexValidator(
+                regex='^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$',
+                message='The entered value is not a color in the format HEX!'
+            )
+        ]
     )
     slug = models.SlugField(
         verbose_name='Slug',
@@ -51,6 +57,12 @@ class Ingredient(models.Model):
     class Meta:
         verbose_name = 'Ingredient'
         verbose_name_plural = 'Ingredients'
+        constraints = (
+            models.UniqueConstraint(
+                fields=('name', 'measurement_unit'),
+                name='unique_ingredient'
+            ),
+        )
 
     def __str__(self):
         return f'{self.name}, {self.measurement_unit}'

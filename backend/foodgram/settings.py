@@ -8,23 +8,16 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-SECRET_KEY = '5rjueq+w#bd$sb)x!r9hxaju$gtiz!p*nha@=$h7znva(b%^-1'
+SECRET_KEY = os.getenv('SECRET_KEY', default='token')
 
 
 DEBUG = True
 
 MAX_LEN = 200
 
-# ALLOWED_HOSTS = []
-ALLOWED_HOSTS = [
-    '158.160.11.193',
-    '127.0.0.1',
-    '0.0.0.0',
-    'localhost',
-    'backend',
-    # 'name.ddns.net'
-]
+# ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(',')
+
+ALLOWED_HOSTS = ['*']
 
 AMAUNT_POST_ON_PAGE = 6
 
@@ -82,25 +75,18 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 
 # Database
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB', 'django'),
+        'USER': os.getenv('POSTGRES_USER', 'django'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', ''),
+        'PORT': os.getenv('DB_PORT', 5432)
+    }
+}
+
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
-if DEBUG:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('POSTGRES_DB', 'django'),
-            'USER': os.getenv('POSTGRES_USER', 'django'),
-            'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
-            'HOST': os.getenv('DB_HOST', ''),
-            'PORT': os.getenv('DB_PORT', 5432)
-        }
-    }
 
 
 AUTH_PASSWORD_VALIDATORS = [
