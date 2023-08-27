@@ -6,7 +6,8 @@ from users.models import Subscribe, User
 
 from .utils import add_ingridient
 from recipes.models import (
-    FavoriteRecipes, Ingredient, IngredientsForRecipeInAmount, Recipe,
+    FavoriteRecipes, Ingredient,
+    IngredientsForRecipeInAmount, Recipe,
     ShoppingList, Tag,
 )
 
