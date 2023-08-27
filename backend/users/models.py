@@ -72,7 +72,7 @@ class Subscribe(models.Model):
             models.CheckConstraint(
                 check=~models.Q(user=models.F('author')),
                 name='not_self_following'
-                )
+            )
         )
 
     def __str__(self) -> str:

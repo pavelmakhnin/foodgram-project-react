@@ -33,4 +33,3 @@ class SubscribeAdmin(admin.ModelAdmin):
     search_fields = ('user', 'author')
     list_filter = ('user', 'author')
     list_display = ('user', 'author')
-

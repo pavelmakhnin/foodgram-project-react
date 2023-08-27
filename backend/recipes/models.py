@@ -106,11 +106,11 @@ class Recipe(models.Model):
     cooking_time = models.PositiveSmallIntegerField(
         validators=[
             MinValueValidator(
-                1, 'Cooking time is at least 1 minute, if you just read :).'
-                ),
+                1, 'Cooking time is at least 1 minute.'
+            ),
             MaxValueValidator(
                 2880, 'Cooking time not more than 2880 minutes (2 days)).'
-                )
+            )
         ],
         verbose_name='Coocking time',
         help_text='Coocking time (in minutes)',
@@ -155,12 +155,13 @@ class IngredientsForRecipeInAmount(models.Model):
         validators=[
             MinValueValidator(
                 1, 'You must specify a volume of at least 1 unit.'
-                ),
+            ),
             MaxValueValidator(
                 100, 'You must specify a volume not more than 100 units.'
-                )
+            )
         ],
     )
+
 
     class Meta:
         verbose_name = 'IngredientRecipe'
