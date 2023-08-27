@@ -1,7 +1,7 @@
-from django.core.validators import (MinValueValidator, RegexValidator,
-                                    MaxValueValidator)
+from django.core.validators import (
+    MaxValueValidator, MinValueValidator, RegexValidator,
+)
 from django.db import models
-
 from users.models import User
 
 
@@ -140,11 +140,13 @@ class IngredientsForRecipeInAmount(models.Model):
         Recipe,
         on_delete=models.CASCADE,
         verbose_name='Recipe',
+        related_name='recipe_ingredients'
     )
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.PROTECT,
         verbose_name='Ingredients of the Recipe',
+        related_name='recipe_ingredients'
     )
 
     amount = models.PositiveSmallIntegerField(

@@ -1,120 +1,82 @@
-# praktikum_new_diplom
-# «Продуктовый помощник»
+# Foodgram - gродуктовый помощник
+Прроект предназначен для публикации рецептов различных блюд.
+Здесь можно делиться своими любимыми рецептами, добавлять в избранное рецепты других пользователей, формировать список покупок, необходимый для выбранных рецептов.
 
 ---
-## Локальная версия:
-- #### Зарегистрироваться.
-- #### создавать рецепты.
-- #### подписывать на авторов
-- #### Скачивать рецепты
+## Технологии:
+- #### Django.
+- #### Python.
+- #### Docker
 ---
 
-### Настройки докера после ревьюлакальной версии:
+## Запуск проекта
+- #### Клонировать репозиторий
+git clone https://github.com/pavelmakhnin/foodgram-project-react
+
+- #### Собрать образы
+cd frontend 
+docker build -t username/foodgram_frontend: latest .
+cd ../backend  
+docker build -t username/foodgram_backend: latest .
+cd ../infra  
+docker build -t username/foodgram_gateway: latest .
+
+- #### Собрать контейнеры
+Из директории infra выполнить команду: docker compose -f docker-compose.production.yml up –-build
+
+- #### Применить миграции
+Из директории infra выполнить команду: docker compose -f docker-compose.production.yml manage.py migrate
+
+- #### Создать superuser
+Из директории infra выполнить команду: docker compose -f docker-compose.production.yml createsuperuser
+
+- #### Собрать статику
+docker-compose exec backend python manage.py collectstatic --no-input
+docker-compose exec backend cp -r /app/static/. /static/
+
+- #### Загрузить ингредиенты
+docker compose -f docker-compose.production.yml exec backend python manage.py load_ingredients_csv
+
+## Подготовка и деплой на сервере
+
+#### Создаём на сервере новую директорию и сразу в неё переходим.
+- sudo mkdir foodgram && cd foodgram
+
+#### Создаём в директории foodgram файл .env
+ALLOWED_HOSTS=yourhost,158.160.xxx.xxx,127.0.0.1,localhost,backend
+SECRET_KEY=yoursecretkey
+POSTGRES_USER=django_user
+POSTGRES_PASSWORD=mysecretpassword
+POSTGRES_DB=django
+DB_HOST=db
+DB_PORT=5432
+DEBAG=FALSE
+
+#### Cоздаём файл докер-компос.
+- sudo touch docker-compose.production.yml 
+
+#### Переносим в файл докер-компосе на сервере содержимое локального файла.
+- sudo nano docker-compose.production.yml 
+Копируем cntrl+shift+c и переносим cntrl+shift+v
+
+#### Применить миграции
+- sudo docker compose -f docker-compose.production.yml manage.py migrate
+
+#### Создать superuser
+- sudo docker compose -f docker-compose.production.yml createsuperuser
+
+#### Собрать статику
+- sudo docker-compose exec backend python manage.py collectstatic 
+- sudo docker-compose exec backend cp -r /app/static/. /static/
+
+#### Загрузить ингредиенты
+- sudo docker compose -f docker-compose.production.yml exec backend python manage.py load_ingredients_csv
 
 
-## Работа API
+## Данные для входа в админку:
+Логин: pasha1904@yandex.ru
+Пароль: Test2023
 
-#### 1. Создается пользователь:
+## Проект доступен по адресу
+http://158.160.11.193/
 
-POST : https://foodisgood.ddns.net/api/users/
-
-```
-{
-  "email": "vpupkin@yandex.ru",
-  "username": "vasya.pupkin",
-  "first_name": "Вася",
-  "last_name": "Пупкин",
-  "password": "Qwerty123"
-}
-
-respone 200 : 
-
-{
-"email": "vpupkin@yandex.ru",
-"id": 0,
-"username": "vasya.pupkin",
-"first_name": "Вася",
-"last_name": "Пупкин"
-}
-
-```
-
-#### 2. Токен. 
-
-POST : https://foodisgood.ddns.net/api/auth/token/login/
-
-```
-{
-  "password": "string",
-  "email": "string"
-}
-
-respone 201 : 
-
-{
-  "auth_token": "здесть_будет_указа_токен"
-}
-
-```
-#### 3. Рецепт. С использование токена. 
-
-
-POST : https://foodisgood.ddns.net/api/recipes/
-
-```
-{
-  "ingredients": [
-    {
-      "id": 1123,
-      "amount": 10
-    }
-  ],
-  "tags": [
-    1,
-    2
-  ],
-  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",
-  "name": "string",
-  "text": "string",
-  "cooking_time": 1
-}
-
-response 200 :
-
-{
-  "id": 0,
-  "tags": [
-    {
-      "id": 0,
-      "name": "Завтрак",
-      "color": "#E26C2D",
-      "slug": "breakfast"
-    }
-  ],
-  "author": {
-    "email": "user@example.com",
-    "id": 0,
-    "username": "string",
-    "first_name": "Вася",
-    "last_name": "Пупкин",
-    "is_subscribed": false
-  },
-  "ingredients": [
-    {
-      "id": 0,
-      "name": "Картофель отварной",
-      "measurement_unit": "г",
-      "amount": 1
-    }
-  ],
-  "is_favorited": true,
-  "is_in_shopping_cart": true,
-  "name": "string",
-  "image": "http://foodgram.example.org/media/recipes/images/image.jpeg",
-  "text": "string",
-  "cooking_time": 1
-}
-
-```
-
-#### Документация по запросам "http://localhost/api/docs/redoc.html"

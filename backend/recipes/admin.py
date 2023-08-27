@@ -34,6 +34,12 @@ class IngredientsForRecipeInAmountInLine(admin.TabularInline):
     min_num = 1
 
 
+class RecipeTagsInLine(admin.TabularInline):
+    model = Recipe.tags.through
+    extra = 1
+    min_num = 1
+
+
 @admin.register(IngredientsForRecipeInAmount)
 class IngredientsForRecipeInAmountAdmin(admin.ModelAdmin):
     """Presentation of Ingredients,

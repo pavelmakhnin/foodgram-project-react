@@ -1,5 +1,4 @@
 import os
-# from distutils.util import strtobool
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -22,7 +21,6 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default='127.0.0.1, localhost').split
 
 AMAUNT_POST_ON_PAGE = 6
 
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',

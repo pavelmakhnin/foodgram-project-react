@@ -2,8 +2,7 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 
-from recipes.models import Ingredient
-from recipes.models import IngredientsForRecipeInAmount
+from recipes.models import Ingredient, IngredientsForRecipeInAmount
 
 
 def add_ingridient(ingredients, recipe):
@@ -22,14 +21,12 @@ def get_shopping_cart(request):
     ingredients = (
         IngredientsForRecipeInAmount.objects.filter(
             recipe__in_shopping_list__user=request.user
-        ).annotate(
-            total_amount=Sum('amount')
         ).values_list(
             'ingredient__name',
-            'total_amount',
             'ingredient__measurement_unit'
-        )
-    )
+        ).annotate(
+            total_amount=Sum('amount')
+        ).order_by())
     buy_list_text = [
         '{} - {} {}.'.format(*ingredient) for ingredient in ingredients]
     response = HttpResponse(

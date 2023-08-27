@@ -1,15 +1,16 @@
 from django.db import transaction
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
-from recipes.models import (FavoriteRecipes, Ingredient,
-                            IngredientsForRecipeInAmount, Recipe, ShoppingList,
-                            Tag)
 from rest_framework import exceptions, serializers
 from users.models import Subscribe, User
 
 from .utils import add_ingridient
+from recipes.models import (
+    FavoriteRecipes, Ingredient, IngredientsForRecipeInAmount, Recipe,
+    ShoppingList, Tag,
+)
 
-# userss
+# users
 
 
 class CustomUserSerializer(UserSerializer):
@@ -126,10 +127,11 @@ class RecipeSerializer(serializers.ModelSerializer):
     )
     author = CustomUserSerializer(read_only=True)
     tags = TagSerializer(many=True)
-    ingredients = serializers.SerializerMethodField(
+    ingredients = RecipeIngredientsSerializer(
+        many=True,
         source='recipe_ingredients'
     )
-    cooking_time = serializers.IntegerField(max_value=32767, min_value=1)
+    cooking_time = serializers.IntegerField()
     image = Base64ImageField(max_length=None, use_url=True)
     text = serializers.CharField()
     is_favorited = serializers.SerializerMethodField()
@@ -138,12 +140,6 @@ class RecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         exclude = ('pub_date',)
-
-    def get_ingredients(self, obj):
-        ingredients = IngredientsForRecipeInAmount.objects.filter(recipe=obj)
-        serializer = RecipeIngredientsSerializer(ingredients, many=True)
-
-        return serializer.data
 
     def get_is_favorited(self, obj):
         user = self.context['request'].user
@@ -183,7 +179,6 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             )
 
         return value
-    
 
     def validate_ingredients(self, value):
         if not value:
@@ -192,10 +187,12 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             )
 
         ingredients = [item['id'] for item in value]
-        if len(ingredients) == len(set(ingredients)):
-            raise exceptions.ValidationError(
-                'A recipe cannot have two identical ingredients..'
-                )
+        ingredients_set = set()
+        for ingredient in ingredients:
+            if ingredient in ingredients_set:
+                raise exceptions.ValidationError(
+                    'A recipe cannot have two identical ingredients..')
+            ingredients_set.add(ingredient)
 
         return value
 
@@ -244,4 +241,3 @@ class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = '__all__'
-
