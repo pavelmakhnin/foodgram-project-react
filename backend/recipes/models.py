@@ -162,7 +162,6 @@ class IngredientsForRecipeInAmount(models.Model):
         ],
     )
 
-
     class Meta:
         verbose_name = 'IngredientRecipe'
         verbose_name_plural = 'IngredientsRecipe'
