@@ -1,12 +1,15 @@
+from django.db import transaction
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
-from recipes.models import (Ingredient, IngredientsForRecipeInAmount, Recipe,
-                            ShoppingList, Tag, FavoriteRecipes)
+from recipes.models import (FavoriteRecipes, Ingredient,
+                            IngredientsForRecipeInAmount, Recipe, ShoppingList,
+                            Tag)
 from rest_framework import exceptions, serializers
 from users.models import Subscribe, User
+
 from .utils import add_ingridient
 
-# users
+# userss
 
 
 class CustomUserSerializer(UserSerializer):
@@ -89,9 +92,8 @@ class RecipeIngredientsSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField(
         source='ingredient.id'
     )
-    name = serializers.SlugRelatedField(
-        read_only=True,
-        slug_field='recipe'
+    name = serializers.ReadOnlyField(
+        source='ingredient.name'
     )
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit'
@@ -181,6 +183,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             )
 
         return value
+    
 
     def validate_ingredients(self, value):
         if not value:
@@ -189,14 +192,14 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
             )
 
         ingredients = [item['id'] for item in value]
-        for ingredient in ingredients:
-            if ingredients.count(ingredient) > 1:
-                raise exceptions.ValidationError(
-                    'A recipe cannot have two identical ingredients..'
+        if len(ingredients) == len(set(ingredients)):
+            raise exceptions.ValidationError(
+                'A recipe cannot have two identical ingredients..'
                 )
 
         return value
 
+    @transaction.atomic
     def create(self, validated_data):
         author = self.context.get('request').user
         tags = validated_data.pop('tags')
@@ -207,6 +210,7 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
 
         return recipe
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags', None)
         if tags is not None:
@@ -240,3 +244,4 @@ class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = '__all__'
+

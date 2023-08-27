@@ -1,23 +1,80 @@
 from django.shortcuts import get_object_or_404
-
-from djoser.views import UserViewSet
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import exceptions, status, viewsets, filters
+from djoser.views import UserViewSet
+from recipes.models import (FavoriteRecipes, Ingredient, Recipe, ShoppingList,
+                            Tag)
+from rest_framework import exceptions, filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
+from users.models import Subscribe, User
+
 from .filters import RecipeFilter
 from .pagination import CustomPagination
 from .permissions import IsAuthorOrAdminPermission
-from recipes.models import (Recipe, ShoppingList, Ingredient, Tag,
-                            FavoriteRecipes)
-from users.models import (User, Subscribe)
-from .serializers import (RecipeCreateUpdateSerializer, RecipeSerializer,
-                          ShortRecipeSerializer, IngredientSerializer,
-                          TagSerializer, SubscriptionSerializer)
+from .serializers import (IngredientSerializer, RecipeCreateUpdateSerializer,
+                          RecipeSerializer, ShortRecipeSerializer,
+                          SubscriptionSerializer, TagSerializer)
 from .utils import get_shopping_cart
+
+
+class CustomUserViewSet(UserViewSet):
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    pagination_class = CustomPagination
+
+    @action(
+        detail=False,
+        methods=['GET'],
+        serializer_class=SubscriptionSerializer,
+        permission_classes=(IsAuthenticated, )
+    )
+    def subscriptions(self, request):
+        queryset = User.objects.filter(subscribtion_author__user=request.user)
+        paginated_queryset = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(paginated_queryset, many=True)
+
+        return self.get_paginated_response(serializer.data)
+
+    @action(
+        detail=True,
+        methods=['POST'],
+        serializer_class=SubscriptionSerializer
+    )
+    def subscribe(self, request, id=None):
+        user = self.request.user
+        author = get_object_or_404(User, pk=id)
+        if user == author:
+            raise exceptions.ValidationError(
+                'Subscription to yourself is not possible.'
+            )
+        if Subscribe.objects.filter(
+            user=user,
+            author=author
+        ).exists():
+            raise exceptions.ValidationError('Subscribtion exists.')
+
+        Subscribe.objects.create(user=user, author=author)
+        serializer = self.get_serializer(author)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @subscribe.mapping.delete
+    def unsubscribe(self, request, id=None):
+        user = self.request.user
+        author = get_object_or_404(User, pk=id)
+
+        if not Subscribe.objects.filter(
+            user=user,
+            author=author
+        ).exists():
+            raise exceptions.ValidationError(
+                'Subscription not registered or is already been deleted.'
+            )
+        Subscribe.objects.get(user=user, author=author).delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -80,7 +137,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe=recipe
         ).exists():
             raise exceptions.ValidationError(
-                'Recipe is addedto Shopping List.'
+                'Recipe is added to Shopping List.'
             )
 
         ShoppingList.objects.create(user=user, recipe=recipe)
@@ -137,60 +194,3 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     pagination_class = None
-
-
-class CustomUserViewSet(UserViewSet):
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-    pagination_class = CustomPagination
-
-    @action(
-        detail=False,
-        methods=['GET'],
-        serializer_class=SubscriptionSerializer,
-        permission_classes=(IsAuthenticated, )
-    )
-    def subscriptions(self, request):
-        queryset = User.objects.filter(user_follower__user=request.user)
-        paginated_queryset = self.paginate_queryset(queryset)
-        serializer = self.get_serializer(paginated_queryset, many=True)
-
-        return self.get_paginated_response(serializer.data)
-
-    @action(
-        detail=True,
-        methods=['POST'],
-        serializer_class=SubscriptionSerializer
-    )
-    def subscribe(self, request, id=None):
-        user = self.request.user
-        author = get_object_or_404(User, pk=id)
-        if user == author:
-            raise exceptions.ValidationError(
-                'Subscription to yourself is not possible.'
-            )
-        if Subscribe.objects.filter(
-            user=user,
-            author=author
-        ).exists():
-            raise exceptions.ValidationError('Subscribtion exists.')
-
-        Subscribe.objects.create(user=user, author=author)
-        serializer = self.get_serializer(author)
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    @subscribe.mapping.delete
-    def unsubscribe(self, request, id=None):
-        user = self.request.user
-        author = get_object_or_404(User, pk=id)
-
-        if not Subscribe.objects.filter(
-            user=user,
-            author=author
-        ).exists():
-            raise exceptions.ValidationError(
-                'Subscription not registered or is already been deleted.'
-            )
-        Subscribe.objects.get(user=user, author=author).delete()
-
-        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -5,8 +5,6 @@ from django.shortcuts import get_object_or_404
 from recipes.models import Ingredient
 from recipes.models import IngredientsForRecipeInAmount
 
-# recipes
-
 
 def add_ingridient(ingredients, recipe):
     for ingredient in ingredients:

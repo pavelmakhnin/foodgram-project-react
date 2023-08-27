@@ -3,7 +3,7 @@ from django.contrib import admin
 from .models import (
     Tag, Ingredient, Recipe,
     IngredientsForRecipeInAmount,
-    FavoriteRecipes, ShoppingList
+    ShoppingList, FavoriteRecipes
 )
 
 EMPTY_VALUE = '-empty-'
@@ -11,7 +11,8 @@ EMPTY_VALUE = '-empty-'
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    """Tags Administration Model"""
+    """Tags Administration Model."""
+
     list_display = ('name', 'color', 'slug')
     search_fields = ('name', 'slug')
     list_filter = ('name', 'slug')
@@ -45,20 +46,26 @@ class IngredientsForRecipeInAmountAdmin(admin.ModelAdmin):
 class RecipeAdmin(admin.ModelAdmin):
     """Recipes Administration Model"""
     list_display = (
+        'id',
         'name',
+        'text',
+        'pub_date',
         'author',
-        'added_to_favorites'
+        'added_in_favorites'
     )
     list_filter = (
         'name',
         'author',
         'tags',
     )
+    search_fields = ('name', 'author')
+    readonly_fields = ('added_in_favorites',)
     inlines = (IngredientsForRecipeInAmountInLine,)
     empty_value_display = EMPTY_VALUE
 
-    def added_to_favorites(self, obj):
-        return obj.to_favorites_recipe.count()
+    def added_in_favorites(self, obj):
+        return obj.in_favorite.count()
+    added_in_favorites.short_description = 'Quantity in Favorites'
 
 
 @admin.register(FavoriteRecipes)

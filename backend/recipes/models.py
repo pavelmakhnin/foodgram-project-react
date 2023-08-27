@@ -1,5 +1,5 @@
-# from colorfield.fields import ColorField
-from django.core.validators import RegexValidator
+from django.core.validators import (MinValueValidator, RegexValidator,
+                                    MaxValueValidator)
 from django.db import models
 
 from users.models import User
@@ -9,10 +9,9 @@ class Tag(models.Model):
     """Model for Tags."""
 
     name = models.CharField(
-        verbose_name='Tag',
+        verbose_name='Tag Name',
         help_text='Title for Tag',
         max_length=200,
-        unique=True
     )
     color = models.CharField(
         verbose_name='Hex-code',
@@ -27,8 +26,7 @@ class Tag(models.Model):
         ]
     )
     slug = models.SlugField(
-        verbose_name='Slug',
-        max_length=200,
+        verbose_name='Slug id',
         help_text='Title for Slug',
         unique=True,
     )
@@ -45,13 +43,13 @@ class Ingredient(models.Model):
     """Model for Ingredients."""
 
     name = models.CharField(
-        verbose_name='Ingridient',
+        verbose_name='Ingridient Name',
         max_length=200,
         help_text='Title of the Ingredient'
     )
     measurement_unit = models.CharField(
         verbose_name='Measurement unit',
-        max_length=200,
+        max_length=20,
         help_text='Unit to measure the Ingredient')
 
     class Meta:
@@ -70,6 +68,7 @@ class Ingredient(models.Model):
 
 class Recipe(models.Model):
     """Model for Recipies"""
+
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -94,21 +93,27 @@ class Recipe(models.Model):
     ingredients = models.ManyToManyField(
         Ingredient,
         through='IngredientsForRecipeInAmount',
-        # related_name='recipes',
+        related_name='recipes',
         verbose_name='Ingridients of the recipe',
         help_text='Ingridients needed for the Recipe',
     )
     tags = models.ManyToManyField(
         Tag,
+        through='RecipeTags',
+        related_name='recipes',
         verbose_name='Tag of the recipe'
     )
     cooking_time = models.PositiveSmallIntegerField(
-        # validators=[
-        #     MinValueValidator(
-        #         1, 'Cooking time is at least 1 minute, if you just read :).'
-        #         )
-        # ],
-        verbose_name='Coocking time'
+        validators=[
+            MinValueValidator(
+                1, 'Cooking time is at least 1 minute, if you just read :).'
+                ),
+            MaxValueValidator(
+                2880, 'Cooking time not more than 2880 minutes (2 days)).'
+                )
+        ],
+        verbose_name='Coocking time',
+        help_text='Coocking time (in minutes)',
     )
     pub_date = models.DateTimeField(
         verbose_name='Publication day',
@@ -134,24 +139,25 @@ class IngredientsForRecipeInAmount(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='recipe',
         verbose_name='Recipe',
     )
     ingredient = models.ForeignKey(
         Ingredient,
-        on_delete=models.CASCADE,
-        related_name='ingredient',
+        on_delete=models.PROTECT,
         verbose_name='Ingredients of the Recipe',
     )
 
     amount = models.PositiveSmallIntegerField(
         verbose_name='Amount of the Ingredient',
         help_text='Write the required Amount of this Ingredient',
-        # validators=[
-        #     MinValueValidator(
-        #         1, 'You must specify a volume of at least 1 unit.'
-        #         )
-        # ],
+        validators=[
+            MinValueValidator(
+                1, 'You must specify a volume of at least 1 unit.'
+                ),
+            MaxValueValidator(
+                100, 'You must specify a volume not more than 100 units.'
+                )
+        ],
     )
 
     class Meta:
@@ -168,47 +174,17 @@ class IngredientsForRecipeInAmount(models.Model):
         return f'{self.ingredient} for {self.recipe} : {self.amount}'
 
 
-class FavoriteRecipes(models.Model):
-    """Model to add Recipes to favorite List."""
-
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='to_favorites_user',
-        verbose_name='User',
-    )
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        related_name='to_favorites_recipe',
-        verbose_name='Recipe',
-    )
-
-    class Meta:
-        verbose_name = 'FavoriteRecipes'
-        verbose_name_plural = 'FavoriteRecipes'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'recipe'],
-                name='unique_favorite_user_recipe',
-            )
-        ]
-
-    def __str__(self):
-        return f'{self.recipe} in favorite list for {self.user}'
-
-
 class RecipeTags(models.Model):
     """Model to Tags."""
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        verbose_name='Рецепт'
+        verbose_name='Recipe'
     )
     tag = models.ForeignKey(
         Tag,
         on_delete=models.CASCADE,
-        verbose_name='Тег'
+        verbose_name='Tag'
     )
 
     class Meta:
@@ -219,19 +195,50 @@ class RecipeTags(models.Model):
         return f' Tag {self.tag} for recipe {self.recipe} '
 
 
+class FavoriteRecipes(models.Model):
+    """Model to add Recipes to favorite List."""
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='favorites',
+        verbose_name='User',
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='in_favorite',
+        verbose_name='Recipe',
+    )
+
+    class Meta:
+        verbose_name = 'FavoriteRecipes'
+        verbose_name_plural = 'FavoriteRecipes'
+        default_related_name = 'favorites'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_favorite_user_recipe',
+            )
+        ]
+
+    def __str__(self):
+        return f'Recipe {self.recipe} in favorite list for {self.user}'
+
+
 class ShoppingList(models.Model):
     """Model to form shopping List."""
 
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='user_to_shopping',
+        related_name='shopping_list',
         verbose_name='User',
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='recipe_to_shopping',
+        related_name='in_shopping_list',
         verbose_name='Recipe',
     )
 
@@ -241,7 +248,7 @@ class ShoppingList(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'recipe'],
-                name='unique_shopping_user_recipe',
+                name='unique_shopping_list_recipe',
             )
         ]
 
